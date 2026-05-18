@@ -240,9 +240,43 @@ class CountryCodeAdmin(admin.ModelAdmin):
 class ContactPhotoInline(admin.TabularInline):
 
     model = ContactPhoto
-
     extra = 1
 
+
+# =========================================================
+# BULK STATUS ACTIONS
+# =========================================================
+
+@admin.action(description="Mark selected contacts as Planned")
+def mark_as_planned(modeladmin, request, queryset):
+
+    queryset.update(
+        gift_status="PLANNED"
+    )
+
+
+@admin.action(description="Mark selected contacts as Packed")
+def mark_as_packed(modeladmin, request, queryset):
+
+    queryset.update(
+        gift_status="PACKED"
+    )
+
+
+@admin.action(description="Mark selected contacts as Dispatched")
+def mark_as_dispatched(modeladmin, request, queryset):
+
+    queryset.update(
+        gift_status="DISPATCHED"
+    )
+
+
+@admin.action(description="Mark selected contacts as Delivered")
+def mark_as_delivered(modeladmin, request, queryset):
+
+    queryset.update(
+        gift_status="DELIVERED"
+    )
 
 @admin.register(Contact)
 class ContactAdmin(admin.ModelAdmin):
@@ -255,15 +289,18 @@ class ContactAdmin(admin.ModelAdmin):
         "city",
         "country_code",
         "is_gift_reminder",
+        "gift_status",
         "is_active",
         "created_by",
         "created_at",
     )
 
     list_filter = (
+        "created_by",
         "is_active",
         "is_deleted",
         "is_gift_reminder",
+        "gift_status",
         "city",
         "festivals",
     )
@@ -284,6 +321,13 @@ class ContactAdmin(admin.ModelAdmin):
 
     filter_horizontal = (
         "festivals",
+    )
+
+    actions = (
+        mark_as_planned,
+        mark_as_packed,
+        mark_as_dispatched,
+        mark_as_delivered,
     )
 
     inlines = [

@@ -12,7 +12,7 @@ from rest_framework.mixins import (
     ListModelMixin,
     RetrieveModelMixin,
 )
-from contact_app.models import AppUser,City,CountryCode,Festival,Contact,ContactPhoto
+from contact_app.models import AppUser, City, CountryCode, Festival, Contact, ContactPhoto, GIFT_STATUS_CHOICES
 
 from .serializers import (
     GroupSerializer,
@@ -25,7 +25,9 @@ from .serializers import (
     ContactListSerializer,
     UserListSerializer,
     UserUpdateSerializer,
-    ContactUpdateSerializer
+    ContactUpdateSerializer,
+    ContactStatusUpdateSerializer,
+    GiftStatusSerializer
 )
 
 
@@ -287,7 +289,17 @@ class ContactViewSet(ModelViewSet):
 
     def get_queryset(self):
 
-        return Contact.objects.filter(
+        # return Contact.objects.filter(
+        #     is_deleted=False,
+        #     created_by=self.request.user,
+        # ).select_related(
+        #     "city",
+        #     "country_code",
+        # ).prefetch_related(
+        #     "festivals",
+        #     "photos",
+        # ).order_by("-created_at")
+        queryset = Contact.objects.filter(
             is_deleted=False,
             created_by=self.request.user,
         ).select_related(
@@ -297,6 +309,21 @@ class ContactViewSet(ModelViewSet):
             "festivals",
             "photos",
         ).order_by("-created_at")
+
+        # =========================================
+        # FILTER BY GIFT STATUS
+        # =========================================
+
+        gift_status = self.request.query_params.get(
+            "gift_status"
+        )
+
+        if gift_status:
+            queryset = queryset.filter(
+                gift_status=gift_status
+            )
+
+        return queryset
 
     def get_serializer_class(self):
 
@@ -350,8 +377,6 @@ class ContactViewSet(ModelViewSet):
             status=status.HTTP_200_OK
         )
 
-
-
     def partial_update(self, request, *args, **kwargs):
 
         instance = self.get_object()
@@ -398,6 +423,73 @@ class ContactViewSet(ModelViewSet):
             {
                 "success": True,
                 "message": "Contact deleted successfully",
+            },
+            status=status.HTTP_200_OK
+        )
+
+    # =====================================================
+    # CONTACT STATUS UPDATE API
+    # =====================================================
+
+    @action(
+        methods=["patch"],
+        detail=True,
+        url_path="update-status",
+    )
+    def update_status(self, request, pk=None):
+
+        contact = self.get_object()
+
+        serializer = ContactStatusUpdateSerializer(
+            contact,
+            data=request.data,
+            partial=True,
+        )
+
+        serializer.is_valid(
+            raise_exception=True
+        )
+
+        serializer.save()
+
+        return Response(
+            {
+                "success": True,
+                "message": "Gift status updated successfully",
+                "data": serializer.data,
+            },
+            status=status.HTTP_200_OK
+        )
+
+    # =====================================================
+    # GIFT STATUS LIST API
+    # =====================================================
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="gift-status-list",
+    )
+    def gift_status_list(self, request):
+
+        data = [
+            {
+                "label": label,
+                "value": value,
+            }
+            for value, label in GIFT_STATUS_CHOICES
+        ]
+
+        serializer = GiftStatusSerializer(
+            data,
+            many=True
+        )
+
+        return Response(
+            {
+                "success": True,
+                "message": "Gift status list fetched successfully",
+                "data": serializer.data,
             },
             status=status.HTTP_200_OK
         )

@@ -186,6 +186,13 @@ class Festival(BaseModel):
         return f"{self.name} - {self.festival_date}"
 
 
+GIFT_STATUS_CHOICES = (
+    ("PLANNED", "Gift Planned"),
+    ("PACKED", "Gift Packed"),
+    ("DISPATCHED", "Dispatched"),
+    ("DELIVERED", "Delivered"),
+)
+
 class Contact(BaseModel):
     full_name = models.CharField(max_length=255,)
     mobile_number = models.CharField(max_length=20,)
@@ -208,6 +215,11 @@ class Contact(BaseModel):
         related_name="contacts",
     )
     is_gift_reminder = models.BooleanField(default=False,)
+    gift_status = models.CharField(
+        max_length=50,
+        choices=GIFT_STATUS_CHOICES,
+        default="PLANNED",
+    )
 
     class Meta:
         db_table = "contact"

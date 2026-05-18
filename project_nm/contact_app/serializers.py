@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
-from contact_app.models import AppUser,City,CountryCode,Festival,Contact,ContactPhoto
+from contact_app.models import AppUser, City, CountryCode, Festival, Contact, ContactPhoto, GIFT_STATUS_CHOICES
 
 
 # =========================================================
@@ -311,6 +311,7 @@ class ContactCreateSerializer(serializers.ModelSerializer):
             "contact_photos",
 
             "is_gift_reminder",
+            "gift_status",
 
             "created_at",
         )
@@ -433,6 +434,7 @@ class ContactListSerializer(serializers.ModelSerializer):
             "city",
             "role",
             "is_gift_reminder",
+            "gift_status",
             "festivals",
             "contact_photos"
         )
@@ -588,6 +590,7 @@ class ContactUpdateSerializer(serializers.ModelSerializer):
             "deleted_photo_ids",
 
             "is_gift_reminder",
+            "gift_status"
         )
 
     def update(self, instance, validated_data):
@@ -688,3 +691,40 @@ class ContactUpdateSerializer(serializers.ModelSerializer):
             )
 
         return instance
+
+# =========================================================
+# CONTACT STATUS UPDATE SERIALIZER
+# =========================================================
+
+class ContactStatusUpdateSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Contact
+
+        fields = (
+            "gift_status",
+        )
+
+    def validate_gift_status(self, value):
+
+        valid_statuses = [
+            choice[0]
+            for choice in GIFT_STATUS_CHOICES
+        ]
+
+        if value not in valid_statuses:
+
+            raise serializers.ValidationError(
+                "Invalid gift status"
+            )
+
+        return value
+
+# =========================================================
+# GIFT STATUS SERIALIZER
+# =========================================================
+
+class GiftStatusSerializer(serializers.Serializer):
+
+    label = serializers.CharField()
+    value = serializers.CharField()
